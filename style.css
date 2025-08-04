@@ -66,3 +66,220 @@ body {
   font-weight: 600;
   text-transform: uppercase;
 }
+
+.pokemon-card img {
+  display: block;
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  margin: 0 auto;
+}
+
+.type-container {
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0;
+}
+.type-container .type {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  text-transform: capitalize;
+}
+
+.load-more-btn {
+  display: block;
+  margin: 2rem auto;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background-color: #ffcb05;
+  color: #2a75bb;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.load-more-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.load-more-btn:not(:disabled):hover {
+  background-color: #f5b700;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+.spinner {
+  border: 8px solid rgba(255, 255, 255, 0.2);
+  border-top: 8px solid #fff;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+}
+.modal-content {
+  background: #fff;
+  color: #000;
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 360px;
+  width: 90%;
+  position: relative;
+  text-align: center;
+}
+.close-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+.modal-body img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  margin-bottom: 1rem;
+}
+.modal-body h2 {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+}
+.modal-body p {
+  margin: 0.3rem 0;
+  font-size: 0.9rem;
+}
+.nav-arrows {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+.nav-arrows button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.modal-content {
+  background-color: #1e1e1e;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  border-top: 6px solid #fff;
+}
+
+.modal-body h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.modal-body .type-container {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.modal-body .type-container .type {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+
+.modal-body img {
+  display: block;
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  margin: 1rem auto;
+}
+
+.modal-body .stats {
+  margin-top: 1rem;
+}
+.modal-body .stat {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+.modal-body .stat-name {
+  width: 70px;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.modal-body .stat-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0 0.5rem;
+}
+.modal-body .stat-bar-inner {
+  height: 100%;
+  background-color: currentColor;
+}
+.modal-body .stat-value {
+  width: 30px;
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+.close-btn {
+  color: #fff;
+  font-weight: bold;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+.close-btn:hover {
+  opacity: 1;
+}
+
+.nav-arrows button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  padding: 0.3rem;
+  transition: transform 0.2s;
+}
+.nav-arrows button:hover {
+  transform: scale(1.1);
+}
