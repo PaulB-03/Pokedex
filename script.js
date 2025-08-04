@@ -3,6 +3,21 @@ const itemsPerLoad = 20;
 let offset = 0;
 let allPokemons = [];
 
+const modalOverlayTemplate = `
+  <div class="modal-content">
+    <button class="close-btn">×</button>
+    <div class="modal-body"></div>
+    <div class="nav-arrows">
+      <button class="prev">←</button>
+      <button class="next">→</button>
+    </div>
+  </div>
+`;
+
+const modalState = {
+  overlay: null,
+  currentId: null
+};
 const listContainer = document.querySelector(".list-of-cards");
 const loadMoreBtn = document.createElement("button");
 loadMoreBtn.textContent = "Load More";
@@ -30,6 +45,8 @@ const typeColors = {
   dragon: "#7038f8",
   shadow: "#000000",
 };
+
+
 
 document.querySelector(".body-wrapper").append(loadingOverlay, loadMoreBtn);
 
@@ -159,82 +176,86 @@ function openModal(id) {
   modal.show();
 }
 
+const statTpl = `
+  <div class="stat" style="color:{{COLOR}}">
+    <span class="stat-name">{{STAT_NAME}}</span>
+    <div class="stat-bar">
+      <div class="stat-bar-inner" style="width:{{STAT_VALUE}}%;"></div>
+    </div>
+    <span class="stat-value">{{STAT_VALUE}}</span>
+  </div>
+`;
+
+const modalTemplate = `
+  <h2>{{NAME}} (#{{ID}})</h2>
+  <div class="type-container">{{TYPES}}</div>
+  <img src="{{IMG_SRC}}" alt="{{NAME}}">
+  <div class="stats">{{STATS}}</div>
+`;
+
+function updateModalContent(overlay, pokemon, typeColors) {
+  const primary = pokemon.types[0].type.name;
+  const color   = typeColors[primary] || "#777";
+  const types   = pokemon.types.map(t => `<span class="type">${t.type.name}</span>`).join("");
+  const stats   = pokemon.stats
+    .map(s => statTpl
+      .replace(/{{COLOR}}/, color)
+      .replace(/{{STAT_NAME}}/, s.stat.name)
+      .replace(/{{STAT_VALUE}}/g, s.base_stat)
+    )
+    .join("");
+  overlay.querySelector(".modal-body").innerHTML = modalTemplate
+    .replace(/{{NAME}}/g, pokemon.name.toUpperCase())
+    .replace(/{{ID}}/,    pokemon.id)
+    .replace(/{{IMG_SRC}}/, pokemon.sprites.other["official-artwork"].front_default)
+    .replace(/{{TYPES}}/,  types)
+    .replace(/{{STATS}}/,  stats);
+  overlay.querySelector(".modal-content").style.borderTopColor = color;
+  return pokemon.id;
+}
+
+function setContent(pokemon) {
+  modalState.currentId = updateModalContent(
+    modalState.overlay,
+    pokemon,
+    typeColors
+  );
+}
+
+function navigate(dir) {
+  const { currentId } = modalState;
+  const nextId =
+    ((currentId - 1 + dir + allPokemons.length) % allPokemons.length) + 1;
+  setContent(allPokemons.find((p) => p.id === nextId));
+}
+
+function show() {
+  modalState.overlay.style.display = "flex";
+  document.body.style.overflow = "hidden";
+}
+
+function hide() {
+  modalState.overlay.style.display = "none";
+  document.body.style.overflow = "";
+}
+
 function createModal() {
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
-  overlay.innerHTML = `
-    <div class="modal-content">
-      <button class="close-btn">×</button>
-      <div class="modal-body"></div>
-      <div class="nav-arrows">
-        <button class="prev">←</button>
-        <button class="next">→</button>
-      </div>
-    </div>`;
+  overlay.innerHTML = modalOverlayTemplate;
   overlay.style.display = "none";
+
+  modalState.overlay = overlay;
 
   const closeBtn = overlay.querySelector(".close-btn");
   closeBtn.addEventListener("click", hide);
-
   overlay.addEventListener("click", (e) => {
     if (e.target === overlay) hide();
   });
-
-  overlay.querySelector(".prev").addEventListener("click", () => navigate(-1));
-  overlay.querySelector(".next").addEventListener("click", () => navigate(1));
-
-  function setContent(pokemon) {
-    const primary = pokemon.types[0].type.name;
-    const color = typeColors[primary] || "#777";
-    const body = overlay.querySelector(".modal-body");
-
-    body.innerHTML = `
-    <h2>${pokemon.name.toUpperCase()} (#${pokemon.id})</h2>
-    <div class="type-container">
-      ${pokemon.types
-        .map((t) => `<span class="type">${t.type.name}</span>`)
-        .join("")}
-    </div>
-    <img src="${
-      pokemon.sprites.other["official-artwork"].front_default
-    }" alt="${pokemon.name}">
-    <div class="stats">
-      ${pokemon.stats
-        .map(
-          (s) => `
-        <div class="stat" style="color: ${color}">
-          <span class="stat-name">${s.stat.name}</span>
-          <div class="stat-bar">
-            <div class="stat-bar-inner" style="width: ${s.base_stat}%;"></div>
-          </div>
-          <span class="stat-value">${s.base_stat}</span>
-        </div>
-      `
-        )
-        .join("")}
-    </div>
-  `;
-
-    const modalCard = overlay.querySelector(".modal-content");
-    modalCard.style.borderTopColor = color;
-    currentId = pokemon.id;
-  }
-
-  let currentId;
-  function navigate(dir) {
-    const nextId =
-      ((currentId - 1 + dir + allPokemons.length) % allPokemons.length) + 1;
-    setContent(allPokemons.find((p) => p.id === nextId));
-  }
-
-  function show() {
-    overlay.style.display = "flex";
-    document.body.style.overflow = "hidden";
-  }
-  function hide() {
-    overlay.style.display = "none";
-    document.body.style.overflow = "";
-  }
+  overlay.querySelector(".prev")
+    .addEventListener("click", () => navigate(-1));
+  overlay.querySelector(".next")
+    .addEventListener("click", () => navigate(1));
 
   return { overlay, setContent, show, hide };
 }
