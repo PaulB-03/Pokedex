@@ -1,0 +1,15 @@
+/* Media Queries */
+@media (max-width: 425px) {
+  h1 {
+    font-size: 1.5rem !important;
+  }
+  .header-right input {
+    width: 120px;
+  }
+}
+
+@media (max-width: 350px) {
+  .header-right input {
+    width: 90px;
+  }
+}

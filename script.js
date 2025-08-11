@@ -14,6 +14,10 @@ const modalOverlayTemplate = `
   </div>
 `;
 
+const setLoading = (on) => { (on ? showLoading : hideLoading)(); toggleButton(loadMoreBtn, !on); };
+const toggleLoadMore = (show) => loadMoreBtn.style.display = show ? "block" : "none";
+const showNoResult = () => listContainer.innerHTML = "<p style='color:#fff'>Keine Treffer</p>";
+
 const modalState = {
   overlay: null,
   currentId: null
@@ -58,25 +62,25 @@ document.addEventListener("DOMContentLoaded", () => {
 loadMoreBtn.addEventListener("click", () => loadPokemons());
 
 async function loadPokemons() {
-  showLoading();
-  toggleButton(loadMoreBtn, false);
+  setLoading(true);
   try {
-    const response = await fetch(
-      `${apiUrl}?limit=${itemsPerLoad}&offset=${offset}`
-    );
-    const { results } = await response.json();
-    const details = await Promise.all(
-      results.map((p) => fetch(p.url).then((r) => r.json()))
-    );
+    const { results } = await (await fetch(`${apiUrl}?limit=${itemsPerLoad}&offset=${offset}`)).json();
+    const details = await Promise.all(results.map(p => fetch(p.url).then(r => r.json())));
     allPokemons.push(...details);
     renderCards(details);
     offset += itemsPerLoad;
-  } catch (err) {
-    console.error(err);
-  } finally {
-    hideLoading();
-    toggleButton(loadMoreBtn, true);
-  }
+  } catch (err) { console.error(err); }
+  finally { setLoading(false); }
+}
+
+async function fetchPokemonByName(name) {
+  try {
+    const res = await fetch(`${apiUrl}/${name.toLowerCase()}`);
+    if (!res.ok) return null;
+    const p = await res.json();
+    if (!allPokemons.some(x => x.id === p.id)) allPokemons.push(p);
+    return p;
+  } catch { return null; }
 }
 
 function renderCards(pokemons) {
@@ -86,35 +90,35 @@ function renderCards(pokemons) {
   });
 }
 
-function createCard(pokemon) {
-  const card = document.createElement("div");
-  card.className = "pokemon-card";
-  const primary = pokemon.types[0].type.name;
-  card.style.backgroundColor = typeColors[primary] || "#777";
-
-  const img = document.createElement("img");
-  img.src = pokemon.sprites.other["official-artwork"].front_default;
-  img.alt = pokemon.name;
-
-  const title = document.createElement("h2");
-  title.textContent = pokemon.name.toUpperCase();
-
-  const typeBox = document.createElement("div");
-  typeBox.className = "type-container";
-  pokemon.types.forEach((t) => {
-    const span = document.createElement("span");
-    span.className = `type ${t.type.name}`;
-    span.textContent = t.type.name;
-    typeBox.append(span);
+function createTypeBox(types) {
+  const box = document.createElement("div");
+  box.className = "type-container";
+  types.forEach(t => {
+    const s = document.createElement("span");
+    s.className = `type ${t.type.name}`;
+    s.textContent = t.type.name;
+    box.append(s);
   });
-
-  card.append(img, title, typeBox);
-  card.addEventListener("mouseenter", () => card.classList.add("hover"));
-  card.addEventListener("mouseleave", () => card.classList.remove("hover"));
-
-  card.addEventListener("click", () => openModal(pokemon.id));
-  return card;
+  return box;
 }
+
+function createCard(p) {
+  const c = document.createElement("div");
+  c.className = "pokemon-card";
+  c.style.backgroundColor = typeColors[p.types[0].type.name] || "#777";
+  c.append(
+    Object.assign(document.createElement("img"), {
+      src: p.sprites.other["official-artwork"].front_default,
+      alt: p.name
+    }),
+    Object.assign(document.createElement("h2"), { textContent: p.name.toUpperCase() }),
+    createTypeBox(p.types)
+  );
+  ["mouseenter","mouseleave"].forEach(e => c.addEventListener(e, () => c.classList.toggle("hover")));
+  c.addEventListener("click", () => openModal(p.id));
+  return c;
+}
+
 
 function createLoadingOverlay() {
   const overlay = document.createElement("div");
@@ -138,19 +142,17 @@ function toggleButton(btn, enabled) {
 
 function setupSearch() {
   const input = document.querySelector(".header-right input");
-  input.addEventListener(
-    "input",
-    debounce(() => {
-      const term = input.value.trim().toLowerCase();
-      if (term.length >= 3) filterList(term);
-      if (term.length >= 3) {
-        filterList(term);
-      } else {
-        listContainer.innerHTML = "";
-        renderCards(allPokemons);
-      }
-    }, 300)
-  );
+  input.addEventListener("input", debounce(async () => {
+    const term = input.value.trim().toLowerCase();
+    showLoading(); listContainer.innerHTML = "";
+    if (!term || term.length < 3) { toggleLoadMore(true); hideLoading(); return renderCards(allPokemons); }
+    toggleLoadMore(false);
+    const local = allPokemons.filter(p => p.name.includes(term));
+    if (local.length) { hideLoading(); return renderCards(local); }
+    const remote = await fetchPokemonByName(term);
+    remote ? renderCards([remote]) : showNoResult();
+    hideLoading();
+  }, 300));
 }
 
 function filterList(term) {
@@ -244,9 +246,7 @@ function createModal() {
   overlay.className = "modal-overlay";
   overlay.innerHTML = modalOverlayTemplate;
   overlay.style.display = "none";
-
   modalState.overlay = overlay;
-
   const closeBtn = overlay.querySelector(".close-btn");
   closeBtn.addEventListener("click", hide);
   overlay.addEventListener("click", (e) => {
@@ -256,6 +256,5 @@ function createModal() {
     .addEventListener("click", () => navigate(-1));
   overlay.querySelector(".next")
     .addEventListener("click", () => navigate(1));
-
   return { overlay, setContent, show, hide };
 }
