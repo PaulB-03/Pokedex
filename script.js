@@ -2,6 +2,7 @@ const apiUrl = "https://pokeapi.co/api/v2/pokemon";
 const itemsPerLoad = 20;
 let offset = 0;
 let allPokemons = [];
+let loadedPokemons = [];
 
 const modalOverlayTemplate = `
   <div class="modal-content">
@@ -12,6 +13,23 @@ const modalOverlayTemplate = `
       <button class="next">→</button>
     </div>
   </div>
+`;
+
+const statTpl = `
+  <div class="stat" style="color:{{COLOR}}">
+    <span class="stat-name">{{STAT_NAME}}</span>
+    <div class="stat-bar">
+      <div class="stat-bar-inner" style="width:{{STAT_VALUE}}%;"></div>
+    </div>
+    <span class="stat-value">{{STAT_VALUE}}</span>
+  </div>
+`;
+
+const modalTemplate = `
+  <h2>{{NAME}} (#{{ID}})</h2>
+  <div class="type-container">{{TYPES}}</div>
+  <img src="{{IMG_SRC}}" alt="{{NAME}}">
+  <div class="stats">{{STATS}}</div>
 `;
 
 const setLoading = (on) => { (on ? showLoading : hideLoading)(); toggleButton(loadMoreBtn, !on); };
@@ -67,6 +85,7 @@ async function loadPokemons() {
     const { results } = await (await fetch(`${apiUrl}?limit=${itemsPerLoad}&offset=${offset}`)).json();
     const details = await Promise.all(results.map(p => fetch(p.url).then(r => r.json())));
     allPokemons.push(...details);
+    loadedPokemons.push(...details);
     renderCards(details);
     offset += itemsPerLoad;
   } catch (err) { console.error(err); }
@@ -80,7 +99,7 @@ async function fetchPokemonByName(name) {
     const p = await res.json();
     if (!allPokemons.some(x => x.id === p.id)) allPokemons.push(p);
     return p;
-  } catch { return null; }
+  } catch(err) { return null; }
 }
 
 function renderCards(pokemons) {
@@ -145,7 +164,7 @@ function setupSearch() {
   input.addEventListener("input", debounce(async () => {
     const term = input.value.trim().toLowerCase();
     showLoading(); listContainer.innerHTML = "";
-    if (!term || term.length < 3) { toggleLoadMore(true); hideLoading(); return renderCards(allPokemons); }
+    if (!term || term.length < 3) { toggleLoadMore(true); hideLoading(); return renderCards(loadedPokemons); }
     toggleLoadMore(false);
     const local = allPokemons.filter(p => p.name.includes(term));
     if (local.length) { hideLoading(); return renderCards(local); }
@@ -177,23 +196,6 @@ function openModal(id) {
   modal.setContent(pokemon);
   modal.show();
 }
-
-const statTpl = `
-  <div class="stat" style="color:{{COLOR}}">
-    <span class="stat-name">{{STAT_NAME}}</span>
-    <div class="stat-bar">
-      <div class="stat-bar-inner" style="width:{{STAT_VALUE}}%;"></div>
-    </div>
-    <span class="stat-value">{{STAT_VALUE}}</span>
-  </div>
-`;
-
-const modalTemplate = `
-  <h2>{{NAME}} (#{{ID}})</h2>
-  <div class="type-container">{{TYPES}}</div>
-  <img src="{{IMG_SRC}}" alt="{{NAME}}">
-  <div class="stats">{{STATS}}</div>
-`;
 
 function updateModalContent(overlay, pokemon, typeColors) {
   const primary = pokemon.types[0].type.name;

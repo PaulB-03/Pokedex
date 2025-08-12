@@ -1,4 +1,3 @@
-/* Media Queries */
 @media (max-width: 425px) {
   h1 {
     font-size: 1.5rem !important;
