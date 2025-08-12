@@ -12,6 +12,12 @@ body {
   padding: 10px 20px;
   background-color: #814a4a;
   height: 80px;
+  max-width: 1920px;
+  margin: 0 auto;
+}
+
+.header-outer{
+  background-color: #814a4a;
 }
 
 .header-left {
@@ -40,10 +46,6 @@ body {
   padding: 20px;
   height: calc(100vh - 100px);
   background-color: #5e1e1e;
-  align-self: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
 .list-of-cards {
@@ -51,6 +53,7 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 1.5rem;
   max-width: 1920px;
+  margin-inline: auto;
 }
 
 .pokemon-card {
